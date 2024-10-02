@@ -1,9 +1,11 @@
 import 'dart:convert';
-
-import 'package:dio/dio.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:momentum/dio/ChartService.dart';
 import 'package:html/parser.dart' as html;
+
+
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -12,13 +14,40 @@ class Scan extends StatefulWidget {
   State<Scan> createState() => _ScanState();
 }
 
+@HiveType(typeId: 0)
+class Stock {
+
+  @HiveField(0)
+  String name;
+
+  @HiveField(1)
+  bool selected;
+
+  Stock({required this.name, required this.selected});
+}
+
 class _ScanState extends State<Scan> {
   List<dynamic> list = [];
 
   @override
   void initState() {
     super.initState();
-    _scan();
+    // _scan();
+    _hive();
+  }
+
+  void _hive() async {
+
+    var path = Directory.current.path;
+    Hive..init(path)..registerAdapter(StockAdapter());
+    await Hive.openBox('my_box');
+
+    await Hive.box('my_box').put('name', ['A','B','C','D']);
+    final name = await Hive.box('my_box').get('name');
+
+    print('------------------');
+    print(name);
+
   }
 
   void _scan() async{
