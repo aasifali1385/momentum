@@ -11,7 +11,7 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  int _currentIndex = 2;
+  int _currentIndex = 1;
 
   List<Widget> screens = [
     const Scan(),
@@ -37,13 +37,10 @@ class _DashboardState extends State<Dashboard> {
           BottomNavigationBarItem(
               icon: Icon(Icons.candlestick_chart_outlined), label: "Charts"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.calculate_outlined),
-              label: "Statistic"),
+              icon: Icon(Icons.calculate_outlined), label: "Statistic"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.list_alt_outlined),
-              label: "Open"), BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: "Closed"),
+              icon: Icon(Icons.list_alt_outlined), label: "Open"),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: "Closed"),
         ],
       ),
     );

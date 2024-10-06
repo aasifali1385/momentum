@@ -113,17 +113,13 @@ class _ScanState extends State<Scan> {
               activeColor: Colors.black,
               value: item['selected'],
               onChanged: (checked) {
-                var da = {
-                  'code': item['code'],
-                  'selected': checked,
-                  'high': item['high'],
-                  'low': item['low']
-                };
+                item['selected'] = checked;
 
                 setState(() {
-                  allData[item['code']] = da;
+                  allData[item['code']] = item;
                 });
-                stockBox.put(item['code'], da);
+
+                stockBox.put(item['code'], item);
               })
         ],
       ),
