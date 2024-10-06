@@ -15,7 +15,7 @@ class ChartService {
   void _initDio() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://chartink.com',
+        baseUrl: 'https://chartink.com/',
       ),
     );
 
@@ -29,7 +29,7 @@ class ChartService {
 
   Future<dynamic> getToken() async {
     try {
-      return await _dio.get('/screener');
+      return await _dio.get('screener');
     } on DioException catch (e) {
       return e.response;
     }
@@ -43,8 +43,18 @@ class ChartService {
       final formData = FormData.fromMap({'scan_clause': scan44MA});
       final options = Options(headers: {'X-csrf-token': '$token'});
 
-      return await _dio.post('/screener/process',
+      return await _dio.post('screener/process',
           data: formData, options: options);
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
+  Future<dynamic> getChart(String stock) async {
+    try {
+      return await _dio.get(
+          'raw/chartdisplay.php?v=o&t=d&E=1&E2=1&h=1&l=0&vg=1&y=1&s=0&w=0&c1=RSI%7E&c2=14%7E&c3=BB%7Esupertrend%7E&c4=20%2C2%7E7%2C3%7E&a1=1&a1t=c&a1v=SMA&a1l=44&a2=1&a2t=c&a2v=SMA&a2l=50&a3l=15&a4l=20&a5l=28&ti=91&d=d&width=1127&is_premium=false&user_id=0',
+          queryParameters: {"A": stock});
     } on DioException catch (e) {
       return e.response;
     }

@@ -1,11 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:momentum/dio/ChartService.dart';
 import 'package:html/parser.dart' as html;
-
-
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -14,59 +11,55 @@ class Scan extends StatefulWidget {
   State<Scan> createState() => _ScanState();
 }
 
-@HiveType(typeId: 0)
-class Stock {
-
-  @HiveField(0)
-  String name;
-
-  @HiveField(1)
-  bool selected;
-
-  Stock({required this.name, required this.selected});
-}
-
 class _ScanState extends State<Scan> {
-  List<dynamic> list = [];
+  Map<String, dynamic> allData = {};
+  late Box<dynamic> stockBox;
+
+  String scan = "Scan";
 
   @override
   void initState() {
     super.initState();
-    // _scan();
-    _hive();
+    _getList();
   }
 
-  void _hive() async {
-
-    var path = Directory.current.path;
-    Hive..init(path)..registerAdapter(StockAdapter());
-    await Hive.openBox('my_box');
-
-    await Hive.box('my_box').put('name', ['A','B','C','D']);
-    final name = await Hive.box('my_box').get('name');
-
-    print('------------------');
-    print(name);
-
+  Future<void> _getList() async {
+    stockBox = await Hive.openBox('stockBox');
+    allData = {for (var element in stockBox.values) element['code']: element};
+    setState(() {});
   }
 
-  void _scan() async{
+  void _scan() async {
+    setState(() {
+      scan = "Scanning...";
+    });
 
     final chartService = ChartService();
-
     var htmlText = await chartService.getToken();
 
     final doc = html.parse(htmlText.data);
-    String? token = doc.querySelector('meta[name="csrf-token"]')!.attributes['content'];
-
-    print('------------------');
-    print(token);
+    String? token =
+        doc.querySelector('meta[name="csrf-token"]')!.attributes['content'];
 
     final res = await chartService.chartScan(token);
     final jsonData = jsonDecode(res.toString());
-    final dataArray = jsonData['data'];
-    print(dataArray[0]);
+    List<dynamic> dataArray = jsonData['data'];
 
+    allData.clear();
+    for (var ls in dataArray) {
+      allData[ls['nsecode']] = {
+        'code': ls['nsecode'],
+        'selected': false,
+        'high': 0,
+        'low': 0
+      };
+    }
+
+    stockBox.clear();
+    await stockBox.putAll(allData);
+    setState(() {
+      scan = "Scan";
+    });
   }
 
   @override
@@ -76,31 +69,62 @@ class _ScanState extends State<Scan> {
       child: Column(
         children: [
           Expanded(
-            child: list.isEmpty
-                ? const Text('\n\n\nNothing!',style: TextStyle(fontSize: 20),)
-                : ListView.builder(itemCount: 13, itemBuilder: item),
-          ),
+              child: Column(
+            children: [
+              const SizedBox(height: 30),
+              for (var da in allData.values) item(da),
+            ],
+          )
+              // allData.isEmpty
+              //     ? const Text(
+              //         '\n\n\nNothing!',
+              //         style: TextStyle(fontSize: 20),
+              //       )
+              //     : ListView.builder(
+              //         itemCount: allData.length,
+              //         itemBuilder: (context, index) {
+              //           return item(allData. [index]);
+              //         }),
+              ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 40)),
-                onPressed: _scan,
-                child: const Text('Scan')),
+                onPressed: scan == "Scan" ? _scan : null,
+                child: Text(scan)),
           )
         ],
       ),
     );
   }
 
-  Widget item(context, index) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
+  Widget item(item) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 20),
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.black))),
       child: Row(
         children: [
           Expanded(
-              child: Text('Item $index', style: const TextStyle(fontSize: 16))),
-          Checkbox(value: false, onChanged: (checked) {})
+              child: Text(item['code'], style: const TextStyle(fontSize: 18))),
+          Checkbox(
+              activeColor: Colors.black,
+              value: item['selected'],
+              onChanged: (checked) {
+                var da = {
+                  'code': item['code'],
+                  'selected': checked,
+                  'high': item['high'],
+                  'low': item['low']
+                };
+
+                setState(() {
+                  allData[item['code']] = da;
+                });
+                stockBox.put(item['code'], da);
+              })
         ],
       ),
     );

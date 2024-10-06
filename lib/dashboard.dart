@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:momentum/statistic.dart';
 import 'scan.dart';
-import 'chart.dart';
+import 'charts.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -11,11 +11,11 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  int _currentIndex = 0;
+  int _currentIndex = 2;
 
   List<Widget> screens = [
     const Scan(),
-    const Chart(),
+    const Charts(),
     const Statistic(),
   ];
 
