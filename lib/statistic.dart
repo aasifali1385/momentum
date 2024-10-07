@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:momentum/dio/KiteService.dart';
 
 class Statistic extends StatefulWidget {
   const Statistic({super.key});
@@ -31,6 +32,18 @@ class _StatisticState extends State<Statistic> {
   void initState() {
     super.initState();
     _getList();
+    _login();
+  }
+
+  void _login() async {
+    final res = await KiteService().login();
+    print(res);
+    final rid = res.data['data']['request_id'];
+
+    // final res2 = await KiteService().twoFacAuth(rid, '813218');
+    // print(res2);   //{"status":"success","data":{"profile":{}}}
+
+
   }
 
   @override
@@ -150,6 +163,7 @@ class _StatisticState extends State<Statistic> {
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     onPressed: () {
+                      _login();
                       // if (_formKey.currentState!.validate()) {
                       //   _formKey.currentState!.save();
                       //   // Login logic here
