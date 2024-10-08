@@ -13,9 +13,9 @@ class Scan extends StatefulWidget {
 
 class _ScanState extends State<Scan> {
   Map<String, dynamic> allData = {};
-  late Box<dynamic> stockBox;
+  late Box stockBox;
 
-  String scan = "Scan";
+  String status = "Scan";
 
   @override
   void initState() {
@@ -25,13 +25,25 @@ class _ScanState extends State<Scan> {
 
   Future<void> _getList() async {
     stockBox = await Hive.openBox('stockBox');
-    allData = {for (var element in stockBox.values) element['code']: element};
+    // allData.clear();
+    // allData = {for (var element in stockBox.values) element['code']: element};
+
+    for (var element in stockBox.values) {
+      allData[element['code']] = element;
+    }
+
+    print(stockBox.values.length);
+
     setState(() {});
+
+    // setState(() {
+    //   allData = {for (var element in stockBox.values) element['code']: element};
+    // });
   }
 
   void _scan() async {
     setState(() {
-      scan = "Scanning...";
+      status = "Scanning...";
     });
 
     final chartService = ChartService();
@@ -57,42 +69,44 @@ class _ScanState extends State<Scan> {
 
     stockBox.clear();
     await stockBox.putAll(allData);
+    stockBox.close();
     setState(() {
-      scan = "Scan";
+      status = "Scan";
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final mediaQueryData = MediaQuery.of(context);
+    final statusBarHeight = mediaQueryData.padding.top;
+
     return Container(
       color: Colors.amber,
+      // padding: EdgeInsets.only(top: statusBarHeight),
       child: Column(
         children: [
           Expanded(
-              child: Column(
-            children: [
-              const SizedBox(height: 30),
-              for (var da in allData.values) item(da),
-            ],
-          )
-              // allData.isEmpty
-              //     ? const Text(
-              //         '\n\n\nNothing!',
-              //         style: TextStyle(fontSize: 20),
-              //       )
-              //     : ListView.builder(
-              //         itemCount: allData.length,
-              //         itemBuilder: (context, index) {
-              //           return item(allData. [index]);
-              //         }),
-              ),
+            child: allData.isEmpty
+                ? const Center(
+                    child: Text(
+                    'NOTHING TO SHOW HERE',
+                    style: TextStyle(fontSize: 18),
+                  ))
+                : ListView.builder(
+                    itemCount: allData.length,
+                    itemBuilder: (context, index) {
+                      List<String> keys = allData.keys.toList();
+                      String key = keys[index];
+                      return item(allData[key]);
+                    }),
+          ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8),
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 40)),
-                onPressed: scan == "Scan" ? _scan : null,
-                child: Text(scan)),
+                onPressed: status == "Scan" ? _scan : null,
+                child: Text(status,style: const TextStyle(fontSize: 16),)),
           )
         ],
       ),

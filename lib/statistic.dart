@@ -36,24 +36,32 @@ class _StatisticState extends State<Statistic> {
   }
 
   void _login() async {
-    final res = await KiteService().login();
-    print(res);
-    final rid = res.data['data']['request_id'];
+    // final res = await KiteService().login();
+    // print(res);
+    // final rid = res.data['data']['request_id'];
 
-    // final res2 = await KiteService().twoFacAuth(rid, '813218');
-    // print(res2);   //{"status":"success","data":{"profile":{}}}
+    // final res2 = await KiteService().twoFacAuth(rid, '323588');
+    // print(res2); //{"status":"success","data":{"profile":{}}}
 
-
+    // if (res2.data['status'] == 'success') {
+    //   for (String token in res2.headers['set-cookie']) {
+    //     if (token.startsWith('enctoken')) {
+    // KiteService().setSP('enctoken', token.split(';')[0].replaceFirst('=', ' '));
+    // }
+    // }
+    // }
   }
 
   @override
   Widget build(BuildContext context) {
+    final mediaQueryData = MediaQuery.of(context);
+    final statusBarHeight = mediaQueryData.padding.top;
     return Container(
-      color: Colors.white10,
+      color: Colors.blueGrey[200],
       padding: const EdgeInsets.all(8),
       child: Column(
         children: [
-          const SizedBox(height: 24),
+          SizedBox(height: statusBarHeight),
           Row(
             children: [
               Expanded(
@@ -139,6 +147,7 @@ class _StatisticState extends State<Statistic> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const TextField(
+              maxLength: 6,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Enter TOTP',

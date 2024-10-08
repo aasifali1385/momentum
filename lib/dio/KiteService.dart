@@ -1,6 +1,7 @@
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class KiteService {
   static final KiteService _instance = KiteService._internal();
@@ -10,6 +11,7 @@ class KiteService {
 
   KiteService._internal() {
     _initDio();
+    // _initSP();
   }
 
   void _initDio() {
@@ -24,6 +26,21 @@ class KiteService {
   }
 
   Dio get dio => _dio;
+
+  ////////////////////////////////////////////
+  // late SharedPreferences sp;
+  //
+  // void _initSP() async {
+  //   sp = await SharedPreferences.getInstance();
+  // }
+  //
+  // Future<dynamic> setSP(key, value) async {
+  //   sp.setString(key, value);
+  // }
+  //
+  // String? getSP(key) {
+  //   return sp.getString(key);
+  // }
 
   ////////////////////////////////////////////
   final options = Options(contentType: Headers.formUrlEncodedContentType);

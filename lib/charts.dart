@@ -27,9 +27,7 @@ class _ChartsState extends State<Charts> {
   }
 
   void _getList() async {
-
     stockBox = await Hive.openBox('stockBox');
-
     progress = 1;
     for (var element in stockBox.values) {
       element['image'] = await _getChart(element['code']);
@@ -38,7 +36,6 @@ class _ChartsState extends State<Charts> {
         progress++;
       });
     }
-
   }
 
   Future<dynamic> _getChart(code) async {
@@ -56,32 +53,38 @@ class _ChartsState extends State<Charts> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQueryData = MediaQuery.of(context);
+    final statusBarHeight = mediaQueryData.padding.top;
+
     return Container(
-      color: Colors.green,
       width: double.infinity,
       height: double.infinity,
-      padding: const EdgeInsets.only(top: 24),
-      child:
-      allData.length != stockBox.length
-          ? Center(
-              child: Transform.rotate(
-              angle: -90 * 3.14 / 180,
+      padding: EdgeInsets.only(top: statusBarHeight),
+      child: progress > 1
+          ? stockBox.length != allData.length
+              ? Align(
+                  alignment: Alignment.bottomCenter,
+                  child: LinearProgressIndicator(
+                    minHeight: 8,
+                    color: Colors.orange,
+                    value: progress / stockBox.length,
+                  ),
+                )
+              : ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: allData.length,
+                  itemBuilder: (context, index) {
+                    List<String> keys = allData.keys.toList();
+                    String key = keys[index];
+                    return chart(allData[key]);
+                  })
+          : const Align(
+              alignment: Alignment.bottomCenter,
               child: LinearProgressIndicator(
-                minHeight: 6,
-                value: progress / stockBox.length,
-                backgroundColor: Colors.grey,
-                color: Colors.white,
+                minHeight: 8,
+                color: Colors.amber,
               ),
-            ))
-          :
-      ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: allData.length,
-              itemBuilder: (context, index) {
-                List<String> keys = allData.keys.toList();
-                String key = keys[index];
-                return chart(allData[key]);
-              }),
+            ),
     );
   }
 
