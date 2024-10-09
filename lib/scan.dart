@@ -132,7 +132,6 @@ class _ScanState extends State<Scan> {
                 setState(() {
                   allData[item['code']] = item;
                 });
-
                 stockBox.put(item['code'], item);
               })
         ],

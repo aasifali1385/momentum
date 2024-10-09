@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:momentum/dio/KiteService.dart';
 
+import 'dio/angel_service.dart';
+
 class Statistic extends StatefulWidget {
   const Statistic({super.key});
 
@@ -25,30 +27,73 @@ class _StatisticState extends State<Statistic> {
     for (var data in allData.values) {
       if (data['selected']) list.add(data['code']);
     }
+
     setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
+    _configure();
+  }
+  void _configure() async {
+    await AngelService().configureBox();
+    _checkLogin();
     _getList();
-    _login();
   }
 
-  void _login() async {
-    // final res = await KiteService().login();
+  void _checkLogin() async {
+    final res = await AngelService().getProfile();
+
+    print(res);
+
+    setState(() {
+       connection = res.data['status'] ? "Connected" : "Disconnected";
+    });
+  }
+
+  void _login(String totp) async {
+    final res = await AngelService().login(totp);
+
+    if (res.data['status']) {
+      connection = "Connected";
+      final token = res.data['data']['jwtToken'];
+      await AngelService().saveToken(token);
+    }
+    else {
+      connection = 'Disconnected';
+    }
+  }
+
+  void _sync() async {
+
+  }
+
+
+
+  void _test() async {
+    // final res = await AngelService().login('408282');
+    // if (res.data['status']) {
+    //   final token = res.data['data']['jwtToken'];
+    //   await AngelService().saveToken(token);
+    // }
+    // print('Login ${res.data['status']}');
+
+    // final res = await ApiService2().getSymbolToken();
+    // var symbolToken = {};
+    // for (var ls in res.data) {
+    //   if (ls['symbol'].toString().endsWith('-EQ')) {
+    //     symbolToken[ls['symbol'].toString().replaceFirst('-EQ', '')] = ls['token'];
+    //   }
+    // }
+
+    final res = await AngelService().getData();
+    print(res.data['data']['fetched']);
+
+    // final res = await ApiService2().createGTT();
     // print(res);
-    // final rid = res.data['data']['request_id'];
-
-    // final res2 = await KiteService().twoFacAuth(rid, '323588');
-    // print(res2); //{"status":"success","data":{"profile":{}}}
-
-    // if (res2.data['status'] == 'success') {
-    //   for (String token in res2.headers['set-cookie']) {
-    //     if (token.startsWith('enctoken')) {
-    // KiteService().setSP('enctoken', token.split(';')[0].replaceFirst('=', ' '));
-    // }
-    // }
+    // if (res.data['status']) {
+    //     print(res.data['data']['id']);
     // }
   }
 
@@ -57,7 +102,7 @@ class _StatisticState extends State<Statistic> {
     final mediaQueryData = MediaQuery.of(context);
     final statusBarHeight = mediaQueryData.padding.top;
     return Container(
-      color: Colors.blueGrey[200],
+      color: Colors.lightGreen,
       padding: const EdgeInsets.all(8),
       child: Column(
         children: [
@@ -91,7 +136,7 @@ class _StatisticState extends State<Statistic> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () {},
+                onPressed: _sync,
                 icon: const Icon(Icons.sync_rounded, color: Colors.white),
                 style: IconButton.styleFrom(backgroundColor: Colors.green),
               ),
@@ -130,12 +175,16 @@ class _StatisticState extends State<Statistic> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(data, style: const TextStyle(fontSize: 16)),
-            Text('3 x 14000', style: const TextStyle(fontSize: 16)),
+            Text('', style: const TextStyle(fontSize: 16)),
           ],
         ));
   }
 
   Widget dialog(context) {
+
+    final controller = TextEditingController();
+    var errorText = '';
+
     return Dialog(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -146,10 +195,12 @@ class _StatisticState extends State<Statistic> {
               'Login',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const TextField(
+             TextField(
               maxLength: 6,
+              controller: controller,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
+              decoration:  InputDecoration(
+                errorText: errorText,
                 labelText: 'Enter TOTP',
               ),
             ),
@@ -172,13 +223,13 @@ class _StatisticState extends State<Statistic> {
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     onPressed: () {
-                      _login();
-                      // if (_formKey.currentState!.validate()) {
-                      //   _formKey.currentState!.save();
-                      //   // Login logic here
-                      //   print('Username: $_username, Password: $_password');
-                      Navigator.of(context).pop();
-                      // }
+
+                      if(controller.text.isEmpty){
+                        errorText = "Please enter TOTP";
+                      }
+                      else{
+                        _login(controller.text);
+                      }
                     },
                     child: const Text(
                       'Login',

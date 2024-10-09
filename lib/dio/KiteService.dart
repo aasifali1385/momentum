@@ -74,4 +74,19 @@ class KiteService {
       return e.response;
     }
   }
+  ////////////////////////
+// final res = await KiteService().login();
+// print(res);
+// final rid = res.data['data']['request_id'];
+
+// final res2 = await KiteService().twoFacAuth(rid, '323588');
+// print(res2); //{"status":"success","data":{"profile":{}}}
+
+// if (res2.data['status'] == 'success') {
+//   for (String token in res2.headers['set-cookie']) {
+//     if (token.startsWith('enctoken')) {
+// KiteService().setSP('enctoken', token.split(';')[0].replaceFirst('=', ' '));
+// }
+// }
+// }
 }
