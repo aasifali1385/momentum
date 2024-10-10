@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:momentum/dio/KiteService.dart';
+import 'package:momentum/symbol_token.dart';
 
 import 'dio/angel_service.dart';
 
@@ -12,45 +13,77 @@ class Statistic extends StatefulWidget {
 }
 
 class _StatisticState extends State<Statistic> {
-  String connection = 'Checking...';
-  int risk = 500;
-
-  Map<String, dynamic> allData = {};
-  late Box<dynamic> stockBox;
-
-  final List<dynamic> list = [];
-
-  void _getList() async {
-    stockBox = await Hive.openBox('stockBox');
-    allData = {for (var element in stockBox.values) element['code']: element};
-
-    for (var data in allData.values) {
-      if (data['selected']) list.add(data['code']);
-    }
-
-    setState(() {});
-  }
-
   @override
   void initState() {
     super.initState();
-    _configure();
+    // _configure();
   }
+
   void _configure() async {
     await AngelService().configureBox();
     _checkLogin();
     _getList();
   }
 
+  /////////////////////////////
+
+  String connection = 'Checking...';
+  int risk = 500;
+  num marginReq = 0;
+
+  late Box<dynamic> stockBox;
+  var orders = [];
+
+  void _getList() async {
+    stockBox = await Hive.openBox('stockBox');
+
+    for (var data in stockBox.values) {
+      if (data['selected']) {
+        orders.add({'tradingsymbol': data['code'], 'price': 0, 'qty': 0});
+      }
+    }
+
+    var sTokens = ["3045", "2885"];
+
+    // final res = await ApiService2().getData(sTokens);
+    // if(!res.data['status']){
+    //   print('Please Login First');
+    //   return; }
+
+    // print(res);
+    // final ls = res.data['data']['fetched'];
+    // for (var da in ls) {
+    //   final pr = da['high'] * (1 + 0.001);
+    //   final sl = da['low'] * (1 - 0.001);
+    //   orders.add({
+    //     "exchange": "NSE",
+    //     "transactiontype": "BUY",
+    //     "producttype": "DELIVERY",
+    //     "disclosedqty": "0",
+    //     "tradingsymbol": da['tradingSymbol'],
+    //     "symboltoken": da['symbolToken'],
+    //     "price": pr + 0.05,
+    //     "qty": 500 / (pr - sl),
+    //     "triggerprice": pr
+    //   });
+    // }
+
+    setState(() {});
+  }
+
   void _checkLogin() async {
     final res = await AngelService().getProfile();
-
-    print(res);
+    // print(res);
+    // {"status":true,"message":"SUCCESS","errorcode":"","data":{"clientcode":"A442418","name":"Aasif  Ali","email":"","mobileno":"","exchanges":["nse_fo","nse_cm","cde_fo","ncx_fo","bse_fo","bse_cm","mcx_fo"],"products":["MARGIN","MIS","NRML","CNC","CO","BO"],"lastlogintime":"","broker":""}}
+    // {"success":false,"message":"Invalid Token","errorCode":"AG8001","data":""}
 
     setState(() {
-       connection = res.data['status'] ? "Connected" : "Disconnected";
+      connection =
+          res.data['message'] == "SUCCESS" ? "Connected" : "Disconnected";
     });
   }
+
+  bool login = false;
 
   void _login(String totp) async {
     final res = await AngelService().login(totp);
@@ -59,17 +92,16 @@ class _StatisticState extends State<Statistic> {
       connection = "Connected";
       final token = res.data['data']['jwtToken'];
       await AngelService().saveToken(token);
-    }
-    else {
+    } else {
       connection = 'Disconnected';
     }
+
+    setState(() {
+      login = false;
+    });
   }
 
-  void _sync() async {
-
-  }
-
-
+  void _sync() async {}
 
   void _test() async {
     // final res = await AngelService().login('408282');
@@ -102,11 +134,12 @@ class _StatisticState extends State<Statistic> {
     final mediaQueryData = MediaQuery.of(context);
     final statusBarHeight = mediaQueryData.padding.top;
     return Container(
-      color: Colors.lightGreen,
-      padding: const EdgeInsets.all(8),
+      color: Colors.amber,
+      padding: EdgeInsets.fromLTRB(8, statusBarHeight + 8, 8, 8),
       child: Column(
         children: [
-          SizedBox(height: statusBarHeight),
+          const SymbolToken(),
+          const Divider(color: Colors.black54,),
           Row(
             children: [
               Expanded(
@@ -144,9 +177,9 @@ class _StatisticState extends State<Statistic> {
           ),
           Expanded(
             child: ListView.builder(
-                itemCount: list.length,
+                itemCount: orders.length,
                 itemBuilder: (context, index) {
-                  return item(list[index]);
+                  return item(orders[index]);
                 }),
           ),
           ElevatedButton(
@@ -155,9 +188,9 @@ class _StatisticState extends State<Statistic> {
                 minimumSize: const Size(double.infinity, 40)),
             onPressed: () {},
             onLongPress: () {},
-            child: const Text(
-              'Place Orders: (Total Margin Required: 5000)',
-              style: TextStyle(color: Colors.white),
+            child: Text(
+              'Place Orders: (Total Margin Required: $marginReq)',
+              style: const TextStyle(color: Colors.white, fontSize: 15),
             ),
           ),
         ],
@@ -166,6 +199,8 @@ class _StatisticState extends State<Statistic> {
   }
 
   Widget item(data) {
+    marginReq += (data['qty'] * data['price']);
+
     return Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
@@ -174,16 +209,17 @@ class _StatisticState extends State<Statistic> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(data, style: const TextStyle(fontSize: 16)),
-            Text('', style: const TextStyle(fontSize: 16)),
+            Text(data['tradingsymbol'], style: const TextStyle(fontSize: 16)),
+            Text(
+                '${data['qty']} x ${data['price']} = ${data['qty'] * data['price']}',
+                style: const TextStyle(fontSize: 16)),
           ],
         ));
   }
 
   Widget dialog(context) {
-
     final controller = TextEditingController();
-    var errorText = '';
+    String? errorText;
 
     return Dialog(
       child: Padding(
@@ -195,11 +231,11 @@ class _StatisticState extends State<Statistic> {
               'Login',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-             TextField(
+            TextField(
               maxLength: 6,
               controller: controller,
               keyboardType: TextInputType.number,
-              decoration:  InputDecoration(
+              decoration: InputDecoration(
                 errorText: errorText,
                 labelText: 'Enter TOTP',
               ),
@@ -223,18 +259,26 @@ class _StatisticState extends State<Statistic> {
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     onPressed: () {
-
-                      if(controller.text.isEmpty){
-                        errorText = "Please enter TOTP";
-                      }
-                      else{
-                        _login(controller.text);
-                      }
+                      setState(() {
+                        if (controller.text.isEmpty) {
+                          errorText = "Please enter TOTP";
+                        } else {
+                          login = true;
+                          _login(controller.text);
+                        }
+                      });
                     },
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: login
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ))
+                        : const Text(
+                            'Login',
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                 ),
               ],

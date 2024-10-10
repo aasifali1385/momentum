@@ -74,14 +74,11 @@ class AngelService {
     }
   }
 
-  Future<dynamic> getSymbolToken() async {
+  Future<dynamic> getSymbolToken(progress) async {
     try {
       return await _dio.get(
-        'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json',
-        onReceiveProgress: (transfer, total) {
-          print('${transfer / total * 100}');
-        },
-      );
+          'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json',
+          onReceiveProgress: progress);
     } on DioException catch (e) {
       e.response;
     }

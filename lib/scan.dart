@@ -81,7 +81,7 @@ class _ScanState extends State<Scan> {
     final statusBarHeight = mediaQueryData.padding.top;
 
     return Container(
-      color: Colors.amber,
+      color: Colors.green,
       // padding: EdgeInsets.only(top: statusBarHeight),
       child: Column(
         children: [
@@ -104,9 +104,13 @@ class _ScanState extends State<Scan> {
             padding: const EdgeInsets.all(8),
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
                     minimumSize: const Size(double.infinity, 40)),
                 onPressed: status == "Scan" ? _scan : null,
-                child: Text(status,style: const TextStyle(fontSize: 16),)),
+                child: Text(
+                  status,
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                )),
           )
         ],
       ),
