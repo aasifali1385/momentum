@@ -43,13 +43,13 @@ class AngelService {
 
   Future<void> configureBox() async {
     pref = await Hive.openBox('preferences');
-    token = pref.get('token');
+    token = pref.get('token', defaultValue: '');
   }
 
   /////////////////////////////////////////////
 
-  Future<void> saveToken(token) async {
-    token = token;
+  Future<void> saveToken(tokenRec) async {
+    token = tokenRec;
     await pref.put('token', token);
   }
 
@@ -93,13 +93,12 @@ class AngelService {
     }
   }
 
-  Future<dynamic> getData() async {
+  Future<dynamic> getData(tokens) async {
     try {
       final data = {
         "mode": "OHLC",
         "exchangeTokens": {
-          "NSE": ["3045", "2885"]
-        }
+          "NSE": tokens}
       };
 
       return await _dio.post('secure/angelbroking/market/v1/quote',
@@ -110,23 +109,23 @@ class AngelService {
     }
   }
 
-  Future<dynamic> createGTT() async {
+  Future<dynamic> createGTT(data) async {
     try {
-      final data = {
-        "tradingsymbol": "SBIN-EQ", // *
-        "symboltoken": "3045", // *
-        "exchange": "NSE",
-        "transactiontype": "BUY",
-        "producttype": "DELIVERY",
-        "price": "800",
-        "qty": "10",
-        "triggerprice": "799",
-        "disclosedqty": "0",
-        ///////////////////////////////
-        "gttType": "OCO",
-        "stoplosstriggerprice": "700",
-        "stoplossprice": '699',
-      };
+      // final data = {
+      //   "tradingsymbol": "SBIN-EQ", // *
+      //   "symboltoken": "3045", // *
+      //   "exchange": "NSE",
+      //   "transactiontype": "BUY",
+      //   "producttype": "DELIVERY",
+      //   "price": "800",
+      //   "qty": "10",
+      //   "triggerprice": "799",
+      //   "disclosedqty": "0",
+      //   ///////////////////////////////
+      //   "gttType": "OCO",
+      //   "stoplosstriggerprice": "700",
+      //   "stoplossprice": '699',
+      // };
 
       return await _dio.post('secure/angelbroking/gtt/v1/createRule',
           data: data,

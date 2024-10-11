@@ -1,8 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:momentum/colors.dart';
 import 'package:momentum/dio/ChartService.dart';
 import 'package:html/parser.dart' as html;
+import 'package:flutter/material.dart';
+
+import 'component.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -15,8 +18,6 @@ class _ScanState extends State<Scan> {
   Map<String, dynamic> allData = {};
   late Box stockBox;
 
-  String status = "Scan";
-
   @override
   void initState() {
     super.initState();
@@ -25,8 +26,6 @@ class _ScanState extends State<Scan> {
 
   Future<void> _getList() async {
     stockBox = await Hive.openBox('stockBox');
-    // allData.clear();
-    // allData = {for (var element in stockBox.values) element['code']: element};
 
     for (var element in stockBox.values) {
       allData[element['code']] = element;
@@ -35,15 +34,13 @@ class _ScanState extends State<Scan> {
     print(stockBox.values.length);
 
     setState(() {});
-
-    // setState(() {
-    //   allData = {for (var element in stockBox.values) element['code']: element};
-    // });
   }
+
+  bool isScanning = false;
 
   void _scan() async {
     setState(() {
-      status = "Scanning...";
+      isScanning = true;
     });
 
     final chartService = ChartService();
@@ -67,11 +64,11 @@ class _ScanState extends State<Scan> {
       };
     }
 
-    stockBox.clear();
+    await stockBox.clear();
     await stockBox.putAll(allData);
-    stockBox.close();
+
     setState(() {
-      status = "Scan";
+      isScanning = false;
     });
   }
 
@@ -81,7 +78,7 @@ class _ScanState extends State<Scan> {
     final statusBarHeight = mediaQueryData.padding.top;
 
     return Container(
-      color: Colors.green,
+      color: MyColors.back,
       // padding: EdgeInsets.only(top: statusBarHeight),
       child: Column(
         children: [
@@ -90,7 +87,7 @@ class _ScanState extends State<Scan> {
                 ? const Center(
                     child: Text(
                     'NOTHING TO SHOW HERE',
-                    style: TextStyle(fontSize: 18),
+                    style: TextStyle(fontSize: 18, color: Colors.white),
                   ))
                 : ListView.builder(
                     itemCount: allData.length,
@@ -101,16 +98,18 @@ class _ScanState extends State<Scan> {
                     }),
           ),
           Padding(
-            padding: const EdgeInsets.all(8),
-            child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+            padding: const EdgeInsets.all(12),
+            child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.white),
                     minimumSize: const Size(double.infinity, 40)),
-                onPressed: status == "Scan" ? _scan : null,
-                child: Text(
-                  status,
-                  style: const TextStyle(fontSize: 16, color: Colors.white),
-                )),
+                onPressed: isScanning ? null : _scan,
+                child: isScanning
+                    ? progressCircle()
+                    : const Text(
+                        'Scan Now',
+                        style: TextStyle(fontSize: 16,color: Colors.white ),
+                      )),
           )
         ],
       ),
@@ -122,21 +121,27 @@ class _ScanState extends State<Scan> {
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 20),
       decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.black))),
+          border: Border(bottom: BorderSide(color: MyColors.divider))),
       child: Row(
         children: [
           Expanded(
-              child: Text(item['code'], style: const TextStyle(fontSize: 18))),
+            child: Text(
+              item['code'],
+              style: const TextStyle(fontSize: 18, color: Colors.white),
+            ),
+          ),
           Checkbox(
-              activeColor: Colors.black,
+              activeColor: Colors.white,
+            checkColor:  MyColors.back,
+              side: const BorderSide(color: Colors.white),
               value: item['selected'],
-              onChanged: (checked) {
+              onChanged: (checked) async {
                 item['selected'] = checked;
 
                 setState(() {
                   allData[item['code']] = item;
                 });
-                stockBox.put(item['code'], item);
+                await stockBox.put(item['code'], item);
               })
         ],
       ),

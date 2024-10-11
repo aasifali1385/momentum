@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
-import 'dio/angel_service.dart';
+import 'package:intl/intl.dart';
+import '../dio/angel_service.dart';
+import 'package:momentum/component.dart';
 
 class SymbolToken extends StatefulWidget {
   const SymbolToken({super.key});
@@ -32,9 +33,7 @@ class _SymbolTokenState extends State<SymbolToken> {
       tokens = tokensBox.length;
     });
 
-    if (tokens == 0) {
-      fetchTokens();
-    }
+    // if (tokens == 0) fetchTokens();
   }
 
   bool isFetching = false;
@@ -68,10 +67,13 @@ class _SymbolTokenState extends State<SymbolToken> {
     }
 
     await tokensBox.putAll(symbolToken);
-    await prefBox.put('date', DateTime.now());
+    await prefBox.put(
+        'date', DateFormat('dd MMM HH:mm a').format(DateTime.now()));
 
     setState(() {
       isFetching = false;
+      date = prefBox.get('date', defaultValue: '');
+      tokens = tokensBox.length;
     });
   }
 
@@ -82,33 +84,31 @@ class _SymbolTokenState extends State<SymbolToken> {
         Expanded(
           child: isFetching
               ? LinearProgressIndicator(
-                  color: Colors.blue,
+                  color: Colors.white,
                   value: progress,
+                  backgroundColor: Colors.white10,
                   borderRadius: BorderRadius.circular(10),
                   minHeight: 6,
                 )
               : Text(
-                  '  Last Updated:$date, Tokens:$tokens',
+                  ' Updated on $date, ST:$tokens',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87),
+                      color: Colors.white),
                 ),
         ),
         const SizedBox(width: 8),
         IconButton(
             onPressed: isFetching ? null : fetchTokens,
             style: IconButton.styleFrom(
-              backgroundColor: Colors.blue,
-              disabledBackgroundColor: Colors.blue,
-            ),
+                // backgroundColor: Colors.blue,
+                // disabledBackgroundColor: Colors.blue,
+                ),
             icon: isFetching
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ))
+                ? progressCircle()
                 : const Icon(
                     Icons.download_rounded,
                     color: Colors.white,

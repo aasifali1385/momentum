@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:momentum/statistic.dart';
+import 'package:momentum/statistic/statistic.dart';
+import 'colors.dart';
 import 'scan.dart';
 import 'charts.dart';
 
@@ -11,7 +12,7 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  int _currentIndex = 3;
+  int _currentIndex = 2;
 
   List<Widget> screens = [
     const Scan(),
@@ -26,6 +27,9 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       body: screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white38,
+        backgroundColor: MyColors.backDark,
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:momentum/colors.dart';
 import 'package:momentum/dio/ChartService.dart';
 import 'package:html/parser.dart' as html;
 import 'package:image/image.dart' as Img;
@@ -28,6 +28,8 @@ class _ChartsState extends State<Charts> {
 
   void _getList() async {
     stockBox = await Hive.openBox('stockBox');
+    if (stockBox.values.isEmpty) return;
+
     progress = 1;
     for (var element in stockBox.values) {
       element['image'] = await _getChart(element['code']);
@@ -59,14 +61,16 @@ class _ChartsState extends State<Charts> {
     return Container(
       width: double.infinity,
       height: double.infinity,
+      color: MyColors.back,
       padding: EdgeInsets.only(top: statusBarHeight),
       child: progress > 1
           ? stockBox.length != allData.length
               ? Align(
                   alignment: Alignment.bottomCenter,
                   child: LinearProgressIndicator(
-                    minHeight: 8,
-                    color: Colors.orange,
+                    minHeight: 6,
+                    color: Colors.white,
+                    backgroundColor: Colors.white10,
                     value: progress / stockBox.length,
                   ),
                 )
@@ -81,8 +85,9 @@ class _ChartsState extends State<Charts> {
           : const Align(
               alignment: Alignment.bottomCenter,
               child: LinearProgressIndicator(
-                minHeight: 8,
-                color: Colors.amber,
+                minHeight: 6,
+                color: Colors.white60,
+                backgroundColor: Colors.white10,
               ),
             ),
     );
