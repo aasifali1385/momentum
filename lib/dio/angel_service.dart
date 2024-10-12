@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 class AngelService {
   static final AngelService _instance = AngelService._internal();
@@ -9,8 +8,6 @@ class AngelService {
   late Dio _dio;
   String token = '';
 
-  late Box<dynamic> pref;
-
   AngelService._internal() {
     _dio = Dio();
     _configureDio();
@@ -18,7 +15,7 @@ class AngelService {
 
   AngelService._();
 
-  //////////////////////////////////////
+  /////////////////////////////////
   void _configureDio() {
     // Configure Dio instance
     _dio.options.baseUrl = 'https://apiconnect.angelone.in/rest/';
@@ -40,20 +37,11 @@ class AngelService {
   Dio get dio => _dio;
 
   /////////////////////////////////
-
-  Future<void> configureBox() async {
-    pref = await Hive.openBox('preferences');
-    token = pref.get('token', defaultValue: '');
-  }
-
-  /////////////////////////////////////////////
-
-  Future<void> saveToken(tokenRec) async {
+  void setToken(tokenRec) {
     token = tokenRec;
-    await pref.put('token', token);
   }
 
-  ///////////////////////////////////
+  /////////////////////////////////
 
   // final API_KEY = 'XulMXS75';
   // final SECRET_KEY = 'b68b1579-316d-4e00-8472-eacae849e27a';
@@ -97,8 +85,7 @@ class AngelService {
     try {
       final data = {
         "mode": "OHLC",
-        "exchangeTokens": {
-          "NSE": tokens}
+        "exchangeTokens": {"NSE": tokens}
       };
 
       return await _dio.post('secure/angelbroking/market/v1/quote',
@@ -128,6 +115,30 @@ class AngelService {
       // };
 
       return await _dio.post('secure/angelbroking/gtt/v1/createRule',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
+  Future<dynamic> gttList() async {
+    try {
+      final data = {
+        // "status": ["NEW", "CANCELLED", "ACTIVE", "SENTTOEXCHANGE", "FORALL"],
+
+        // NEW => Placed GTT
+        // CANCELLED => Canceled GTT
+        // ACTIVE =>
+        // SENTTOEXCHANGE =>
+        // FORALL => Placed + Cancelled
+
+        "status": ["FORALL"],
+        "page": 1,
+        "count": 10
+      };
+
+      return await _dio.post('secure/angelbroking/gtt/v1/ruleList',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
     } on DioException catch (e) {

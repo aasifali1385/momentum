@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:momentum/statistic/symbol_token.dart';
-
 import '../colors.dart';
 import '../component.dart';
 import '../dio/angel_service.dart';
@@ -14,6 +13,9 @@ class Statistic extends StatefulWidget {
 }
 
 class _StatisticState extends State<Statistic> {
+  late Box<dynamic> prefBox;
+  late Box<dynamic> stockBox;
+
   @override
   void initState() {
     super.initState();
@@ -21,16 +23,18 @@ class _StatisticState extends State<Statistic> {
   }
 
   void _init() async {
-    await AngelService().configureBox();
+    prefBox = await Hive.openBox('pref');
+    stockBox = await Hive.openBox('stockBox');
     _checkLogin();
     _getList();
   }
 
   ////////////////////// Login  //////////////////////
-  bool isLogin = false;
+  bool? isLogin;
   bool isLogging = false;
 
   void _checkLogin() async {
+    AngelService().setToken(prefBox.get('angelToken', defaultValue: ''));
     final res = await AngelService().getProfile();
     // print(res);
     // {"status":true,"message":"SUCCESS","errorcode":"","data":{"clientcode":"A442418","name":"Aasif  Ali","email":"","mobileno":"","exchanges":["nse_fo","nse_cm","cde_fo","ncx_fo","bse_fo","bse_cm","mcx_fo"],"products":["MARGIN","MIS","NRML","CNC","CO","BO"],"lastlogintime":"","broker":""}}
@@ -53,7 +57,8 @@ class _StatisticState extends State<Statistic> {
     if (res.data['status']) {
       isLogin = true;
       final token = res.data['data']['jwtToken'];
-      await AngelService().saveToken(token);
+      await prefBox.put('angelToken', token);
+      AngelService().setToken(token);
     } else {
       isLogin = false;
     }
@@ -63,14 +68,14 @@ class _StatisticState extends State<Statistic> {
 
   ////////////////// Get initial List //////////////////
 
-  int risk = 100;
-  num marginReq = 0;
+  int rpt = 0;
+  num marginReq = 100;
 
-  late Box<dynamic> stockBox;
   var orders = [];
 
   void _getList() async {
-    stockBox = await Hive.openBox('stockBox');
+    rpt = prefBox.get('rpt', defaultValue: 100);
+
     for (var data in stockBox.values) {
       if (data['selected']) {
         orders.add({'tradingsymbol': data['code'], 'price': 0, 'qty': 0});
@@ -88,6 +93,21 @@ class _StatisticState extends State<Statistic> {
     });
 
     final tokensBox = await Hive.openBox('symbolTokens');
+    if (tokensBox.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+          'Please Download Symbol Tokens...',
+          style: TextStyle(
+              color: MyColors.back, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        backgroundColor: Colors.white,
+      ));
+
+      setState(() {
+        isSyncing = false;
+      });
+      return;
+    }
 
     List<String> sTokens = [];
     for (var data in stockBox.values) {
@@ -97,24 +117,26 @@ class _StatisticState extends State<Statistic> {
       }
     }
 
+    /////////////////////////////////////////////////////////////
     final res = await AngelService().getData(sTokens);
-    print(res);
+    // print(res);
 
     if (res.data['message'] != "SUCCESS") {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          res.data['message'].toString(),
+          style: const TextStyle(
+              color: MyColors.back, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        backgroundColor: Colors.white,
+      ));
+
       setState(() {
         isSyncing = false;
       });
+      return;
     }
-
-    // {"success":false,"message":"Invalid Token","errorCode":"AG8001","data":""}
-    // or
-    // {"status":true,"message":"SUCCESS","errorcode":"",
-    // "data":{
-    // "fetched":[
-    // {"exchange":"NSE","tradingSymbol":"TRENT-EQ","symbolToken":"1964","ltp":8234.95,"open":8069.0,"high":8308.8,"low":7950.0,"close":8028.85},
-    // {"exchange":"NSE","tradingSymbol":"GRANULES-EQ","symbolToken":"11872","ltp":603.85,"open":581.2,"high":607.4,"low":575.05,"close":578.4}
-    // ],"unfetched":[]}}
-
+    ////////////////////////////////////////////////////
     final ls = res.data['data']['fetched'];
     orders.clear();
     marginReq = 0;
@@ -122,7 +144,7 @@ class _StatisticState extends State<Statistic> {
     for (var da in ls) {
       final pr = da['high'] * (1 + 0.001);
       final sl = da['low'] * (1 - 0.001);
-      final qty = risk / (pr - sl);
+      final qty = (rpt / (pr - sl)).toInt();
 
       marginReq += qty * (pr + 0.05);
 
@@ -153,8 +175,10 @@ class _StatisticState extends State<Statistic> {
     });
 
     for (var data in orders) {
-      final res = await AngelService().createGTT(data);
 
+      print(data);
+
+      final res = await AngelService().createGTT(data);
       print(res);
       // {"status":true,"message":"SUCCESS","data":{"id":3375315}}
       // {"status":true,"message":"SUCCESS","data":{"id":3375316}}
@@ -184,62 +208,71 @@ class _StatisticState extends State<Statistic> {
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(
                 flex: 5,
-                child: isLogin
-                    ? OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(0, 46),
-                            side: const BorderSide(color: Colors.white)),
-                        onPressed: isSyncing ? null : _sync,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            isSyncing
-                                ? progressCircle()
-                                : const Icon(Icons.sync_rounded,
-                                    color: Colors.white),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Sync Now',
-                              style: TextStyle(color: Colors.white),
+                child: isLogin == null
+                    ? Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(color: Colors.white),
+                        ))
+                    : isLogin!
+                        ? OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(0, 46),
+                                side: const BorderSide(color: Colors.white)),
+                            onPressed: isSyncing ? null : _sync,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                isSyncing
+                                    ? progressCircle()
+                                    : const Icon(Icons.sync_rounded,
+                                        color: Colors.white),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Sync Now',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      )
-                    : TextField(
-                        controller: totpControl,
-                        maxLength: 6,
-                        keyboardType: TextInputType.number,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20),
-                        decoration: InputDecoration(
-                          suffixIcon: IconButton(
-                              style: IconButton.styleFrom(
-                                  backgroundColor: Colors.white),
-                              onPressed: isLogging
-                                  ? null
-                                  : () {
-                                      if (totpControl.text.length == 6) {
-                                        _login(totpControl.text);
-                                      }
-                                    },
-                              icon: isLogging
-                                  ? progressCircle()
-                                  : const Icon(
-                                      Icons.login_rounded,
-                                      color: MyColors.back,
-                                    )),
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 0, horizontal: 26),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.white),
-                              borderRadius: BorderRadius.circular(50)),
-                          labelText: 'Enter TOTP',
-                          labelStyle: const TextStyle(color: Colors.white),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.white),
-                              borderRadius: BorderRadius.circular(50)),
-                        ),
-                      )),
+                          )
+                        : TextField(
+                            controller: totpControl,
+                            maxLength: 6,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 20),
+                            decoration: InputDecoration(
+                              suffixIcon: IconButton(
+                                  style: IconButton.styleFrom(
+                                      backgroundColor: Colors.white),
+                                  onPressed: isLogging
+                                      ? null
+                                      : () {
+                                          if (totpControl.text.length == 6) {
+                                            _login(totpControl.text);
+                                          }
+                                        },
+                                  icon: isLogging
+                                      ? progressCircle()
+                                      : const Icon(
+                                          Icons.login_rounded,
+                                          color: MyColors.back,
+                                        )),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 0, horizontal: 26),
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      const BorderSide(color: Colors.white),
+                                  borderRadius: BorderRadius.circular(50)),
+                              labelText: 'Enter TOTP',
+                              labelStyle: const TextStyle(color: Colors.white),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      const BorderSide(color: Colors.white),
+                                  borderRadius: BorderRadius.circular(50)),
+                            ),
+                          )),
             const SizedBox(width: 8),
             Expanded(
               flex: 3,
@@ -247,17 +280,14 @@ class _StatisticState extends State<Statistic> {
                 style: OutlinedButton.styleFrom(
                     minimumSize: const Size(0, 46),
                     side: const BorderSide(color: Colors.white)),
-                onPressed: () {
+                onPressed: () async {
                   setState(() {
-                    if (risk < 1000) {
-                      risk += 50;
-                    } else {
-                      risk = 100;
-                    }
+                    rpt = rpt < 1000 ? rpt + 50 : 100;
                   });
+                  await prefBox.put('rpt', rpt);
                 },
                 child: Text(
-                  'RPT: $risk',
+                  'RPT: $rpt',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),

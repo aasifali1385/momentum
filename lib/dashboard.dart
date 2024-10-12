@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:momentum/statistic/statistic.dart';
 import 'colors.dart';
+import 'open.dart';
 import 'scan.dart';
 import 'charts.dart';
 
@@ -12,14 +13,14 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  int _currentIndex = 2;
+  int _currentIndex = 3;
 
   List<Widget> screens = [
     const Scan(),
     const Charts(),
     const Statistic(),
-    const Statistic(),
-    const Statistic(),
+    const Open(),
+    const Text('closed'),
   ];
 
   @override

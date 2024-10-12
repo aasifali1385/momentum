@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:momentum/statistic/statistic.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dashboard.dart';
 
 Future<void> main() async {
-  await Hive.initFlutter();
+
+  WidgetsFlutterBinding.ensureInitialized();
+  final externalStorageDirs = await getExternalStorageDirectory();
+  Hive.init(externalStorageDirs!.path);
+
   runApp(const MyApp());
 }
 
@@ -14,13 +18,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const Dashboard()
-    );
+        title: 'Flutter Demo',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: const Dashboard());
   }
 }
