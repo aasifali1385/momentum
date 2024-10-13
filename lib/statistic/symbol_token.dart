@@ -68,7 +68,7 @@ class _SymbolTokenState extends State<SymbolToken> {
 
     await tokensBox.putAll(symbolToken);
     await prefBox.put(
-        'date', DateFormat('dd MMM HH:mm a').format(DateTime.now()));
+        'date', DateFormat('dd MMM hh:mm a').format(DateTime.now()));
 
     setState(() {
       isFetching = false;

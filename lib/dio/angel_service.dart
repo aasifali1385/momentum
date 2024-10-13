@@ -135,10 +135,26 @@ class AngelService {
 
         "status": ["FORALL"],
         "page": 1,
-        "count": 10
+        "count": 30
       };
 
       return await _dio.post('secure/angelbroking/gtt/v1/ruleList',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
+  Future<dynamic> cancelGTT(gtt) async {
+    try {
+      final data = {
+        "id": gtt['id'],
+        "symboltoken": gtt['symboltoken'],
+        "exchange": gtt['exchange']
+      };
+
+      return await _dio.post('secure/angelbroking/gtt/v1/cancelRule',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
     } on DioException catch (e) {

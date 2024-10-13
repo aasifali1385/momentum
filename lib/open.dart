@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:momentum/dio/angel_service.dart';
 
 import 'colors.dart';
@@ -51,9 +52,32 @@ class _OpenState extends State<Open> {
     // {"stoplossprice":0.0,"stoplosstriggerprice":0.0,"gttType":"GENERIC","status":"CANCELLED","createddate":"2024-10-11T17:48:26.713+05:30","updateddate":"2024-10-11T18:09:01.463+05:30","expirydate":"2025-10-12T17:48:26.687+05:30","clientid":"A442418","tradingsymbol":"TRENT-EQ","symboltoken":"1964","exchange":"NSE","producttype":"DELIVERY","transactiontype":"BUY","price":8317.16,"qty":1,"triggerprice":8317.11,"disclosedqty":0,"id":3375315},
   }
 
+  bool isCancel = false;
+
+  void _cancelGTT(data) async {
+    final res = await AngelService().cancelGTT(data);
+    print(res);
+    if (res.data["message"] == "SUCCESS") {
+      _getData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          res.data['message'].toString(),
+          style: const TextStyle(
+              color: MyColors.back, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        backgroundColor: Colors.white,
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final mediaQueryData = MediaQuery.of(context);
+    final statusBarHeight = mediaQueryData.padding.top;
+
     return Container(
+      padding: EdgeInsets.only(top: statusBarHeight),
       color: MyColors.back,
       width: double.infinity,
       height: double.infinity,
@@ -68,29 +92,95 @@ class _OpenState extends State<Open> {
                     style: TextStyle(fontSize: 20, color: Colors.white),
                   )
                 : ListView.builder(
+                    padding: const EdgeInsets.all(0),
                     itemCount: list.length,
                     itemBuilder: (context, index) {
-                      return item(list[index]);
+                      String dateStr = list[index]['createddate'];
+
+                      bool isHeader = (index == 0) ||
+                          (dateStr.substring(0, 10) !=
+                              (list[index - 1]['createddate'])
+                                  .substring(0, 10));
+
+                      return item(
+                        isHeader,
+                        DateTime.parse(dateStr),
+                        list[index],
+                      );
                     }),
       ),
     );
   }
 
-  Widget item(item) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: MyColors.divider))),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              item['tradingsymbol'],
-              style: const TextStyle(fontSize: 18, color: Colors.white),
-            ),
+  Widget item(isHeader, date, data) {
+    var icon = Icons.add;
+    var color = Colors.white;
+    var longClick = () {};
+
+    switch (data['status']) {
+      case 'NEW':
+        icon = Icons.cancel_outlined;
+        color = Colors.white;
+        longClick = () {
+          _cancelGTT(data);
+        };
+
+      case "CANCELLED":
+        icon = Icons.cancel_outlined;
+        color = Colors.white38;
+
+      case 'ACTIVE':
+      case 'SENTTOEXCHANGE':
+    }
+
+    return Column(
+      children: [
+        if (isHeader) header(date),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            children: [
+              InkWell(
+                onLongPress: longClick,
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: IconTheme.of(context).size! + 4,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(data['tradingsymbol'],
+                  style: TextStyle(fontSize: 18, color: color)),
+              Expanded(
+                child: Text('${data['qty'].round()} x ${data['price'].round()}',
+                    textAlign: TextAlign.end,
+                    style: TextStyle(fontSize: 18, color: color)),
+              ),
+              SizedBox(
+                width: 75,
+                child: Text(' = ${(data['qty'] * data['price']).toInt()}',
+                    style: TextStyle(fontSize: 18, color: color)),
+              ),
+            ],
           ),
-        ],
+        )
+      ],
+    );
+  }
+
+  Widget header(date) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white12,
+      alignment: Alignment.center,
+      child: Text(
+        // DateFormat('dd MMM, hh:mm a').format(date),
+        DateFormat('dd MMM yyyy').format(date),
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white70,
+          fontSize: 15,
+        ),
       ),
     );
   }
