@@ -127,12 +127,13 @@ class AngelService {
       final data = {
         // "status": ["NEW", "CANCELLED", "ACTIVE", "SENTTOEXCHANGE", "FORALL"],
 
-        // NEW => Placed GTT
-        // CANCELLED => Canceled GTT
+        // null => (TRIGGERED & REJECTED) | Problem:(TRIGGERED & EXECUTED)
+        // NEW => PENDING / Placed GTT
+        // CANCELLED => CANCELLED
         // ACTIVE =>
         // SENTTOEXCHANGE =>
         // FORALL => Placed + Cancelled
-
+        // 10, 3, 11, 3, 3, 3, 3
         "status": ["FORALL"],
         "page": 1,
         "count": 30
@@ -155,6 +156,36 @@ class AngelService {
       };
 
       return await _dio.post('secure/angelbroking/gtt/v1/cancelRule',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
+  Future<dynamic> test() async {
+    try {
+      final data = {
+        // "id": '3394754',
+      };
+
+      // {"tradingsymbol":"NHPC-EQ",
+      // "exchange":"NSE",
+      // "isin":"INE848E01016",
+      // "t1quantity":0,"realisedquantity":0,
+      // "quantity":1,
+      // "authorisedquantity":0,
+      // "product":"DELIVERY",
+      // "collateralquantity":null,
+      // "collateraltype":nullhaircut":0.0,
+      // averageprice":91.09,
+      // ltp":91.06,
+      // symboltoken":"17400",
+      // close":90.92,
+      // profitandloss":0.0,
+      // pnlpercentage":-0.03}
+
+      return await _dio.get('secure/angelbroking/order/v1/getTradeBook',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
     } on DioException catch (e) {

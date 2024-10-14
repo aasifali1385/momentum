@@ -142,10 +142,13 @@ class _StatisticState extends State<Statistic> {
     marginReq = 0;
 
     for (var da in ls) {
-      final pr = da['high'] * (1 + 0.001);
+      var pr = da['high'] * (1 + 0.001);
       final sl = da['low'] * (1 - 0.001);
-      final qty = (rpt / (pr - sl)).toInt();
-
+      var qty = (rpt / (pr - sl)).toInt();
+      ////////////
+      // pr = da['ltp'];
+      qty = 1;
+      ////////////
       marginReq += qty * (pr + 0.05);
 
       orders.add({
@@ -157,7 +160,11 @@ class _StatisticState extends State<Statistic> {
         "symboltoken": da['symbolToken'],
         "price": pr + 0.05,
         "qty": qty,
-        "triggerprice": pr
+        "triggerprice": pr,
+////////////////////////////////////
+//         "gttType": "OCO", // "GENERIC"
+        "stoplosstriggerprice": sl,
+        "stoplossprice": sl - 0.05,
       });
     }
 
@@ -175,11 +182,10 @@ class _StatisticState extends State<Statistic> {
     });
 
     for (var data in orders) {
-
       print(data);
 
       final res = await AngelService().createGTT(data);
-      print(res);
+      // print(res);
       // {"status":true,"message":"SUCCESS","data":{"id":3375315}}
       // {"status":true,"message":"SUCCESS","data":{"id":3375316}}
     }
