@@ -37,9 +37,8 @@ class ChartService {
 
   Future<dynamic> chartScan(token) async {
     try {
-      const scan44MA =
-          "( {33489} ( latest close > latest open and latest close > latest upper bollinger band( 20 , 2 ) and 1 day ago close < 1 day ago upper bollinger band( 20 , 2 ) ) ) ";
-      final formData = FormData.fromMap({'scan_clause': scan44MA});
+      const scanClause = "( {33489} ( latest close > latest open and latest sma( latest close , 15 ) > 3 days ago sma( 3 days ago close , 15 ) * 1.001 and latest sma( latest close , 30 ) > 3 days ago sma( 3 days ago close , 30 ) * 1.001 and latest sma( latest close , 150 ) > 3 days ago sma( 3 days ago close , 150 ) * 1.001 and latest close > latest sma( latest close , 15 ) ) ) ";
+      final formData = FormData.fromMap({'scan_clause': scanClause});
       final options = Options(headers: {'X-csrf-token': '$token'});
 
       return await _dio.post('screener/process',

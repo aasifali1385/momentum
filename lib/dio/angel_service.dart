@@ -96,6 +96,23 @@ class AngelService {
     }
   }
 
+  Future<dynamic> getDataInstrument(exchange, symbol, symboltoken ) async {
+    try {
+      final data = {
+        "exchange": exchange,
+        "tradingsymbol": symbol,
+        "symboltoken": symboltoken
+      };
+
+      return await _dio.post(
+          'https://apiconnect.angelone.in/order-service/rest/secure/angelbroking/order/v1/getLtpData',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
   Future<dynamic> createGTT(data) async {
     try {
       // final data = {
@@ -133,10 +150,10 @@ class AngelService {
         // ACTIVE =>
         // SENTTOEXCHANGE =>
         // FORALL => Placed + Cancelled
-        // 10, 3, 11, 3, 3, 3, 3
+
         "status": ["FORALL"],
         "page": 1,
-        "count": 30
+        "count": 20
       };
 
       return await _dio.post('secure/angelbroking/gtt/v1/ruleList',
@@ -163,30 +180,18 @@ class AngelService {
     }
   }
 
-  Future<dynamic> test() async {
+  Future<dynamic> getPosition() async {
     try {
-      final data = {
-        // "id": '3394754',
-      };
+      return await _dio.get('secure/angelbroking/order/v1/getPosition',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
 
-      // {"tradingsymbol":"NHPC-EQ",
-      // "exchange":"NSE",
-      // "isin":"INE848E01016",
-      // "t1quantity":0,"realisedquantity":0,
-      // "quantity":1,
-      // "authorisedquantity":0,
-      // "product":"DELIVERY",
-      // "collateralquantity":null,
-      // "collateraltype":nullhaircut":0.0,
-      // averageprice":91.09,
-      // ltp":91.06,
-      // symboltoken":"17400",
-      // close":90.92,
-      // profitandloss":0.0,
-      // pnlpercentage":-0.03}
-
-      return await _dio.get('secure/angelbroking/order/v1/getTradeBook',
-          data: data,
+  Future<dynamic> getHolding() async {
+    try {
+      return await _dio.get('secure/angelbroking/portfolio/v1/getHolding',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
     } on DioException catch (e) {
       return e.response;

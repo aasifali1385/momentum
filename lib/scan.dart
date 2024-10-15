@@ -55,21 +55,21 @@ class _ScanState extends State<Scan> {
     List<dynamic> dataArray = jsonData['data'];
 
     allData.clear();
-    // for (var ls in dataArray) {
-    //   allData[ls['nsecode']] = {
-    //     'code': ls['nsecode'],
-    //     'selected': false,
-    //     'high': 0,
-    //     'low': 0
-    //   };
-    // }
+    for (var ls in dataArray) {
+      allData[ls['nsecode']] = {
+        'code': ls['nsecode'],
+        'selected': false,
+        'high': 0,
+        'low': 0
+      };
+    }
 
-    allData['NHPC'] = {
-      'code': 'NHPC',
-      'selected': true,
-      'high': 0,
-      'low': 0
-    };
+    // allData['NHPC'] = {
+    //   'code': 'NHPC',
+    //   'selected': true,
+    //   'high': 0,
+    //   'low': 0
+    // };
 
     await stockBox.clear();
     await stockBox.putAll(allData);
@@ -81,8 +81,8 @@ class _ScanState extends State<Scan> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQueryData = MediaQuery.of(context);
-    final statusBarHeight = mediaQueryData.padding.top;
+    // final mediaQueryData = MediaQuery.of(context);
+    // final statusBarHeight = mediaQueryData.padding.top;
 
     return Container(
       color: MyColors.back,

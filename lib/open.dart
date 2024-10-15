@@ -24,9 +24,6 @@ class _OpenState extends State<Open> {
     Box<dynamic> prefBox = await Hive.openBox('pref');
     AngelService().setToken(prefBox.get('angelToken', defaultValue: ''));
     _getData();
-
-    // final res = await AngelService().test();
-    // print('===> ${res.data['data']}');
   }
 
   bool? isLogin;
@@ -36,7 +33,7 @@ class _OpenState extends State<Open> {
   Future<void> _getData() async {
     final res = await AngelService().gttList();
     print('GetData_________________');
-    // print(res.data['data'][0]);
+    print(res.data['data'][0]);
 
     if (res.data['message'] == "SUCCESS") {
       isLogin = true;
@@ -121,100 +118,31 @@ class _OpenState extends State<Open> {
         onRefresh: () => _getData(),
         child: Center(
           child: isLogin == null
-              ? const CircularProgressIndicator(
-            color: Colors.white,
-          )
+              ? const CircularProgressIndicator(color: Colors.white)
               : !isLogin!
-              ? const Text(
-            'PLEASE LOGIN',
-            style: TextStyle(fontSize: 20, color: Colors.white),
-          )
-              : ListView.builder(
-              padding: const EdgeInsets.all(0),
-              itemCount: list.length,
-              itemBuilder: (context, index) {
-                String dateStr = list[index]['createddate'];
+                  ? const Text(
+                      'PLEASE LOGIN',
+                      style: TextStyle(fontSize: 20, color: Colors.white),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(0),
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        String dateStr = list[index]['createddate'];
 
-                bool isHeader = (index == 0) ||
-                    (dateStr.substring(0, 10) !=
-                        (list[index - 1]['createddate'])
-                            .substring(0, 10));
+                        bool isHeader = (index == 0) ||
+                            (dateStr.substring(0, 10) !=
+                                (list[index - 1]['createddate'])
+                                    .substring(0, 10));
 
-                return item(
-                  isHeader,
-                  DateTime.parse(dateStr),
-                  list[index],
-                );
-              }),
+                        return item(
+                          isHeader,
+                          DateTime.parse(dateStr),
+                          list[index],
+                        );
+                      }),
         ),
       ),
-    );
-  }
-
-  Widget item(isHeader, date, data) {
-    var icon = Icons.question_mark_rounded;
-    Color? color = Colors.red;
-    var longClick = () {};
-
-    // print(data['gttType']);
-
-    switch (data['status']) {
-      case 'NEW':
-        icon = Icons.cancel_outlined;
-        color = Colors.white;
-        longClick = () {
-          _cancelGTT(data);
-        };
-
-      case "CANCELLED":
-        icon = Icons.cancel_outlined;
-        color = Colors.white38;
-
-    // case 'ACTIVE':
-    // case 'SENTTOEXCHANGE':
-
-      case null:
-        icon = Icons.gpp_maybe_outlined;
-        color = Colors.green;
-        longClick = () {
-          _createOCO(data);
-        };
-    }
-
-    return Column(
-      children: [
-        if (isHeader) header(date),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            children: [
-              InkWell(
-                onLongPress: longClick,
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: IconTheme
-                      .of(context)
-                      .size! + 4,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(data['tradingsymbol'],
-                  style: TextStyle(fontSize: 18, color: color)),
-              Expanded(
-                child: Text('${data['qty'].round()} x ${data['price'].round()}',
-                    textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 18, color: color)),
-              ),
-              SizedBox(
-                width: 75,
-                child: Text(' = ${(data['qty'] * data['price']).toInt()}',
-                    style: TextStyle(fontSize: 18, color: color)),
-              ),
-            ],
-          ),
-        )
-      ],
     );
   }
 
@@ -232,6 +160,81 @@ class _OpenState extends State<Open> {
           fontSize: 15,
         ),
       ),
+    );
+  }
+
+  Widget item(isHeader, date, data) {
+    var icon = Icons.question_mark_rounded;
+    Color? color = Colors.amber;
+    var longClick = () {};
+
+    // print(data);
+    // {stoplossprice: 89.88, stoplosstriggerprice: 89.93, gttType: GENERIC, status: NEW,
+    // createddate: 2024-10-15T10:37:13.504+05:30, updateddate: 2024-10-15T10:37:13.504+05:30, expirydate: 2025-10-16T10:37:13.495+05:30, clientid: A442418,
+    // tradingsymbol: NHPC-EQ, symboltoken: 17400,
+    // exchange: NSE, producttype: DELIVERY, transactiontype: BUY,
+    // price: 91.98, qty: 1, triggerprice: 91.93, disclosedqty: 0, id: 3405593}
+
+    switch (data['status']) {
+      case 'NEW':
+        icon = Icons.cancel_outlined;
+        color = Colors.white;
+        longClick = () {
+          _cancelGTT(data);
+        };
+
+      case "CANCELLED":
+        icon = Icons.cancel_outlined;
+        color = Colors.white38;
+
+      // case 'ACTIVE':
+      // case 'SENTTOEXCHANGE':
+      // case null:
+      //   icon = Icons.gpp_maybe_outlined;
+      //   color = Colors.green;
+      //   longClick = () {
+      //     // _createOCO(data);
+      //   };
+    }
+
+    return Column(
+      children: [
+        if (isHeader) header(date),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            children: [
+              InkWell(
+                onLongPress: longClick,
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: IconTheme.of(context).size! + 4,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(data['tradingsymbol'],
+                  style: TextStyle(fontSize: 18, color: color)),
+              const SizedBox(width: 6),
+              if (data['gttType'] == "OCO" && data['status'] == "NEW")
+                const Text("OCO", style: TextStyle(fontSize: 12, color: Colors.amber))
+              else if(data['status'] != "CANCELLED")
+                Text(data['status'].toString(), style: const TextStyle(fontSize: 12, color: Colors.amber)),
+
+              Expanded(
+                child: Text('${data['qty'].round()} x ${data['price'].round()}',
+                    textAlign: TextAlign.end,
+                    style: TextStyle(fontSize: 18, color: color)),
+              ),
+              SizedBox(
+                width: 75,
+                child: Text(' = ${(data['qty'] * data['price']).toInt()}',
+                    style: TextStyle(fontSize: 18, color: color)),
+              ),
+            ],
+          ),
+        )
+      ],
     );
   }
 }

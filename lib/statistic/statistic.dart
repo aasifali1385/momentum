@@ -147,7 +147,7 @@ class _StatisticState extends State<Statistic> {
       var qty = (rpt / (pr - sl)).toInt();
       ////////////
       // pr = da['ltp'];
-      qty = 1;
+      // qty = 1;
       ////////////
       marginReq += qty * (pr + 0.05);
 

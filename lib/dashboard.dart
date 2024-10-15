@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:momentum/executed.dart';
 import 'package:momentum/statistic/statistic.dart';
 import 'colors.dart';
+import 'holding.dart';
 import 'open.dart';
 import 'scan.dart';
 import 'charts.dart';
@@ -13,14 +15,15 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  int _currentIndex = 3;
+  int _currentIndex = 5;
 
   List<Widget> screens = [
     const Scan(),
     const Charts(),
     const Statistic(),
     const Open(),
-    const Text('closed'),
+    const Executed(),
+    const Holding(),
   ];
 
   @override
@@ -46,8 +49,11 @@ class _DashboardState extends State<Dashboard> {
           BottomNavigationBarItem(
               icon: Icon(Icons.calculate_outlined), label: "Statistic"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.list_alt_outlined), label: "Open"),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: "Closed"),
+              icon: Icon(Icons.list_alt_rounded), label: "Open"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.checklist_rtl_rounded), label: "Today"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.format_list_bulleted_rounded), label: "Holding"),
         ],
       ),
     );
