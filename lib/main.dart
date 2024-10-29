@@ -6,9 +6,9 @@ import 'dashboard.dart';
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
-  // final externalStorageDirs = await getExternalStorageDirectory();
-  // Hive.init(externalStorageDirs!.path);
-  Hive.initFlutter();
+  final externalStorageDirs = await getExternalStorageDirectory();
+  Hive.init(externalStorageDirs!.path);
+  // Hive.initFlutter();
 
   runApp(const MyApp());
 }

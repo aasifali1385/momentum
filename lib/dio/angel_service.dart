@@ -96,14 +96,8 @@ class AngelService {
     }
   }
 
-  Future<dynamic> getDataInstrument(exchange, symbol, symboltoken ) async {
+  Future<dynamic> getDataInstrument(data) async {
     try {
-      final data = {
-        "exchange": exchange,
-        "tradingsymbol": symbol,
-        "symboltoken": symboltoken
-      };
-
       return await _dio.post(
           'https://apiconnect.angelone.in/order-service/rest/secure/angelbroking/order/v1/getLtpData',
           data: data,
@@ -152,6 +146,22 @@ class AngelService {
         // FORALL => Placed + Cancelled
 
         "status": ["FORALL"],
+        "page": 1,
+        "count": 20
+      };
+
+      return await _dio.post('secure/angelbroking/gtt/v1/ruleList',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
+  Future<dynamic> getNewGtt() async {
+    try {
+      final data = {
+        "status": ["NEW"],
         "page": 1,
         "count": 20
       };

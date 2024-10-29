@@ -117,20 +117,20 @@ class _StatisticState extends State<Statistic> {
       }
     }
 
+    if (sTokens.isEmpty) {
+      snackbar('Please select stocks in scan/chart');
+      setState(() {
+        isSyncing = false;
+      });
+      return;
+    }
+
     /////////////////////////////////////////////////////////////
     final res = await AngelService().getData(sTokens);
     // print(res);
 
     if (res.data['message'] != "SUCCESS") {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          res.data['message'].toString(),
-          style: const TextStyle(
-              color: MyColors.back, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        backgroundColor: Colors.white,
-      ));
-
+      snackbar(res.data['message'].toString());
       setState(() {
         isSyncing = false;
       });
@@ -193,6 +193,17 @@ class _StatisticState extends State<Statistic> {
     setState(() {
       isPlacing = false;
     });
+  }
+
+  void snackbar(message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        message.toString(),
+        style: const TextStyle(
+            color: MyColors.back, fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+      backgroundColor: Colors.white,
+    ));
   }
 
   //////////////////////////////////////////////////

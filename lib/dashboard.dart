@@ -15,7 +15,7 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  int _currentIndex = 5;
+  int _currentIndex = 0;
 
   List<Widget> screens = [
     const Scan(),

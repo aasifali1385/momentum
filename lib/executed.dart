@@ -50,8 +50,15 @@ class _ExecutedState extends State<Executed> {
       return;
     }
 
-    isPlacing = List.filled(res.data['data'].length, false);
+    if (res.data['data'] == null) {
+      snackbar('There is not position today!');
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
 
+    isPlacing = List.filled(res.data['data'].length, false);
 
     final gttRes = await AngelService().gttList();
 
@@ -115,7 +122,7 @@ class _ExecutedState extends State<Executed> {
     if (gttRes.data['message'] == "SUCCESS") {
       gtts = gttRes.data['data'];
     } else {
-      print('GTT List Else=> ${gttRes.data['message']}');
+      snackbar(gttRes.data['message']);
       return;
     }
 
@@ -135,20 +142,13 @@ class _ExecutedState extends State<Executed> {
 
         final res = await AngelService().createGTT(gtt);
         print('OCO => $res');
+
         if (res.data["message"] == "SUCCESS") {
           _getData();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-              res.data['message'].toString(),
-              style: const TextStyle(
-                  color: MyColors.back,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
-            ),
-            backgroundColor: Colors.white,
-          ));
+          snackbar(res.data['message'].toString());
         }
+
         // break;
       }
     }

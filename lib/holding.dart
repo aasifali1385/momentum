@@ -49,7 +49,7 @@ class _HoldingState extends State<Holding> {
 
     isPlacing = List.filled(res.data['data'].length, false);
 
-    final gttRes = await AngelService().gttList();
+    final gttRes = await AngelService().getNewGtt();
 
     if (gttRes.data['message'] != 'SUCCESS') {
       snackbar(gttRes.data['message']);
@@ -59,23 +59,24 @@ class _HoldingState extends State<Holding> {
       return;
     }
 
-    List<dynamic> gtts = gttRes.data['data'];
-
     // print("GTTS=> $gtts");
-    // [{stoplossprice: 89.88, stoplosstriggerprice: 89.93, gttType: OCO, status: CANCELLED,
+    // [{stoplossprice: 89.88, stoplosstriggerprice: 89.93, gttType: OCO, status: NEW,
     // createddate: 2024-10-15T14:25:11.355+05:30, updateddate: 2024-10-15T14:27:41.171+05:30, expirydate: 2025-10-16T14:25:11.326+05:30, clientid: A442418,
     // tradingsymbol: NHPC-EQ, symboltoken: 17400, exchange: NSE, producttype: DELIVERY, transactiontype: SELL, price: 90.64, qty: 2,
     // triggerprice: 90.59, disclosedqty: 0, id: 3410258}
 
-    list = [];
+    List<dynamic> gtts = gttRes.data['data'];
 
-    for (var pos in res.data['data']) {
+    List<dynamic> holdings = res.data['data'];
+    holdings.sort((a, b) => a['tradingsymbol'].compareTo(b['tradingsymbol']));
+
+    list = [];
+    for (var pos in holdings) {
       pos['haveOCO'] = false;
       pos['qtyOCO'] = 0;
 
       for (var gtt in gtts) {
-        if (gtt['status'] == "NEW" &&
-            gtt['tradingsymbol'] == pos['tradingsymbol'] &&
+        if (gtt['tradingsymbol'] == pos['tradingsymbol'] &&
             gtt['transactiontype'] == "SELL" &&
             gtt['gttType'] == "OCO") {
           pos['haveOCO'] = true;
@@ -97,18 +98,15 @@ class _HoldingState extends State<Holding> {
     // product: DELIVERY, collateralquantity: null, collateraltype: null, haircut: 0.0, averageprice: 90.4, ltp: 90.01, symboltoken: 17400,
     // close: 91.06, profitandloss: -1.0, pnlpercentage: -0.43}
 
-    final ltp = await AngelService().getDataInstrument(
-        holding['exchange'], holding['tradingsymbol'], holding['symboltoken']);
+    final ltp = await AngelService().getDataInstrument({
+      "exchange": holding['exchange'],
+      "tradingsymbol": holding['tradingsymbol'],
+      "symboltoken": holding['symboltoken'],
+    });
+
 
     if (ltp.data["message"] != "SUCCESS") {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          ltp.data['message'].toString(),
-          style: const TextStyle(
-              color: MyColors.back, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        backgroundColor: Colors.white,
-      ));
+      snackbar(ltp.data['message'].toString());
       setState(() {
         isPlacing[index] = false;
       });
@@ -176,10 +174,7 @@ class _HoldingState extends State<Holding> {
 
   @override
   Widget build(BuildContext context) {
-    // final mediaQueryData = MediaQuery.of(context);
-    // final statusBarHeight = mediaQueryData.padding.top;
     return Container(
-      // padding: EdgeInsets.only(top: statusBarHeight),
       color: MyColors.back,
       width: double.infinity,
       height: double.infinity,
@@ -196,8 +191,12 @@ class _HoldingState extends State<Holding> {
   }
 
   Widget item(data, index) {
-    Color color = data['haveOCO'] ? Colors.green : Colors.white;
-    // Color color = Colors.white;
+    Color color = data['haveOCO']
+        ? data['qtyOCO'] == data['quantity']
+            ? Colors.green
+            : Colors.amber
+        : Colors.white;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
@@ -208,10 +207,10 @@ class _HoldingState extends State<Holding> {
                   onLongPress: data['haveOCO']
                       ? null
                       : () {
-                          setState(() {
-                            isPlacing[index] = true;
-                          });
-                          _createOCO(data, index);
+                          // setState(() {
+                          //   isPlacing[index] = true;
+                          // });
+                          // _createOCO(data, index);
                         },
                   child: Icon(
                     data['haveOCO']
