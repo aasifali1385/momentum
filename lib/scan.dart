@@ -38,7 +38,7 @@ class _ScanState extends State<Scan> {
 
   bool isScanning = false;
 
-  void _scan() async {
+  void _scan(per) async {
     setState(() {
       isScanning = true;
     });
@@ -50,7 +50,7 @@ class _ScanState extends State<Scan> {
     String? token =
         doc.querySelector('meta[name="csrf-token"]')!.attributes['content'];
 
-    final res = await chartService.chartScan(token);
+    final res = await chartService.chartScan(token, per);
     final jsonData = jsonDecode(res.toString());
     List<dynamic> dataArray = jsonData['data'];
 
@@ -105,18 +105,40 @@ class _ScanState extends State<Scan> {
                     }),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white),
-                    minimumSize: const Size(double.infinity, 40)),
-                onPressed: isScanning ? null : _scan,
-                child: isScanning
-                    ? progressCircle()
-                    : const Text(
-                        'Scan Now',
-                        style: TextStyle(fontSize: 16,color: Colors.white ),
-                      )),
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
+                        // minimumSize: const Size(double.infinity, 40)
+                      ),
+                      onPressed: isScanning ? null : (){_scan(1.02);},
+                      child: isScanning
+                          ? progressCircle()
+                          : const Text(
+                              'Scan Now 2%',
+                              style: TextStyle(fontSize: 16, color: Colors.white),
+                            )),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white),
+                          // minimumSize: const Size(double.infinity, 40)
+                      ),
+                      onPressed: isScanning ? null : (){ _scan(1.03);},
+                      child: isScanning
+                          ? progressCircle()
+                          : const Text(
+                              'Scan Now 3%',
+                              style: TextStyle(fontSize: 16, color: Colors.white),
+                            )),
+                ),
+              ],
+            ),
           )
         ],
       ),
@@ -139,7 +161,7 @@ class _ScanState extends State<Scan> {
           ),
           Checkbox(
               activeColor: Colors.white,
-            checkColor:  MyColors.back,
+              checkColor: MyColors.back,
               side: const BorderSide(color: Colors.white),
               value: item['selected'],
               onChanged: (checked) async {
